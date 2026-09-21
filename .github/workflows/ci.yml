@@ -1,0 +1,38 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      # A real gateway in sandbox mode. No provider keys, nothing spent: the sandbox key answers
+      # from the gateway's outcome table and never reaches a provider.
+      gateway:
+        image: ghcr.io/proxlane/gateway:0.19.0
+        ports: ["8787:8787"]
+        env:
+          PROXLANE_API_KEY: ci-live-key-never-used-0000000000000000
+          PROXLANE_SANDBOX_KEY: ci-sandbox-key-000000000000000000000000
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - run: uv sync
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - name: wait for the gateway
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8787/health && exit 0
+            sleep 2
+          done
+          echo "gateway never became healthy"; exit 1
+      - run: uv run pytest -q
+        env:
+          PROXLANE_TEST_URL: http://localhost:8787
+          PROXLANE_TEST_SANDBOX_KEY: ci-sandbox-key-000000000000000000000000

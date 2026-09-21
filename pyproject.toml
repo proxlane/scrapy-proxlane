@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "scrapy-proxlane"
+version = "0.1.0"
+description = "Scrapy downloader middleware for Proxlane: one gateway in front of your scraping APIs, with failover and honest outcomes."
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+authors = [{ name = "Sam Öjling" }]
+keywords = ["scrapy", "scraping", "proxy", "gateway", "scraperapi", "scrapingbee", "scrapfly", "firecrawl"]
+classifiers = [
+  "Framework :: Scrapy",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Internet :: WWW/HTTP",
+]
+dependencies = ["scrapy>=2.11"]
+
+[project.urls]
+Homepage = "https://proxlane.dev"
+Repository = "https://github.com/proxlane/scrapy-proxlane"
+Gateway = "https://github.com/proxlane/proxlane"
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["scrapy_proxlane"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
