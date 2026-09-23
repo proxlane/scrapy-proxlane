@@ -1,0 +1,85 @@
+# Publishing to PyPI, by trusted publisher.
+#
+# No API token exists for this project, on purpose. PyPI mints a short-lived credential from
+# this workflow's OIDC identity, scoped to this repository, this workflow file and the `pypi`
+# environment. A leaked token cannot exist if none was ever created.
+#
+# Third-party actions are pinned to a commit SHA, the same rule proxlane/proxlane's release
+# workflow follows: this job holds a credential that can publish under our name, so a mutable
+# tag pointing at new code is a supply-chain hole rather than a convenience.
+#
+# The tag is the trigger and the version is the assertion. `v0.1.0` must match both
+# `project.version` and `__version__`, or the build fails before anything is uploaded.
+name: release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      # The same real gateway the test suite uses, in sandbox mode. Nothing is published
+      # without the integration tests passing against it.
+      gateway:
+        image: ghcr.io/proxlane/gateway:0.19.1
+        ports: ["8787:8787"]
+        env:
+          PROXLANE_API_KEY: ci-live-key-never-used-0000000000000000
+          PROXLANE_SANDBOX_KEY: ci-sandbox-key-000000000000000000000000
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: "3.12"
+      - run: uv sync
+
+      - name: the tag is the version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          meta=$(uv run python -c "import tomllib,pathlib;print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])")
+          dunder=$(uv run python -c "import scrapy_proxlane;print(scrapy_proxlane.__version__)")
+          echo "tag=$tag pyproject=$meta __version__=$dunder"
+          [ "$tag" = "$meta" ] && [ "$tag" = "$dunder" ] || {
+            echo "::error title=version::tag $tag, pyproject $meta, __version__ $dunder — all three must agree"
+            exit 1
+          }
+
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - name: wait for the gateway
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8787/health && exit 0
+            sleep 2
+          done
+          echo "gateway never became healthy"; exit 1
+      - run: uv run pytest -q
+        env:
+          PROXLANE_TEST_URL: http://localhost:8787
+          PROXLANE_TEST_SANDBOX_KEY: ci-sandbox-key-000000000000000000000000
+
+      - run: uv build
+      - name: the artefacts are well-formed
+        run: uv run --with twine twine check --strict dist/*
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write # the OIDC exchange, and nothing else
+    steps:
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
