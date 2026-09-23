@@ -12,14 +12,14 @@ jobs:
       # A real gateway in sandbox mode. No provider keys, nothing spent: the sandbox key answers
       # from the gateway's outcome table and never reaches a provider.
       gateway:
-        image: ghcr.io/proxlane/gateway:0.19.0
+        image: ghcr.io/proxlane/gateway:0.19.1
         ports: ["8787:8787"]
         env:
           PROXLANE_API_KEY: ci-live-key-never-used-0000000000000000
           PROXLANE_SANDBOX_KEY: ci-sandbox-key-000000000000000000000000
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           python-version: "3.12"
       - run: uv sync
