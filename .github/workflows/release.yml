@@ -25,7 +25,7 @@ jobs:
       # The same real gateway the test suite uses, in sandbox mode. Nothing is published
       # without the integration tests passing against it.
       gateway:
-        image: ghcr.io/proxlane/gateway:0.19.1
+        image: ghcr.io/proxlane/gateway:0.19.1@sha256:d18b0b703573dcc08ecec9bba43e70ba7bb58259527950282b2cd2c072b80f22
         ports: ["8787:8787"]
         env:
           # Per run, never a literal. The gateway refuses to start with a live key that has been
