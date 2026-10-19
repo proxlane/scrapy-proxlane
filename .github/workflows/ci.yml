@@ -12,7 +12,7 @@ jobs:
       # A real gateway in sandbox mode. No provider keys, nothing spent: the sandbox key answers
       # from the gateway's outcome table and never reaches a provider.
       gateway:
-        image: ghcr.io/proxlane/gateway:0.19.1
+        image: ghcr.io/proxlane/gateway:0.19.1@sha256:d18b0b703573dcc08ecec9bba43e70ba7bb58259527950282b2cd2c072b80f22
         ports: ["8787:8787"]
         env:
           # Per run, never a literal. The gateway refuses to start with a live key that has been
