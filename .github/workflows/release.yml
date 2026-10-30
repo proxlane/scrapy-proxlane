@@ -25,7 +25,7 @@ jobs:
       # The same real gateway the test suite uses, in sandbox mode. Nothing is published
       # without the integration tests passing against it.
       gateway:
-        image: ghcr.io/proxlane/gateway:0.19.1
+        image: ghcr.io/proxlane/gateway:0.22.0@sha256:938d0a31337f7efa1df51b2aa17868f78e47203c190ba06718ecfb25e05c6bc1
         ports: ["8787:8787"]
         env:
           # Per run, never a literal. The gateway refuses to start with a live key that has been
@@ -35,7 +35,7 @@ jobs:
           PROXLANE_SANDBOX_KEY: ci-sandbox-${{ github.run_id }}-${{ github.run_attempt }}-throwaway
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           python-version: "3.12"
       - run: uv sync
@@ -85,4 +85,4 @@ jobs:
         with:
           name: dist
           path: dist/
-      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
